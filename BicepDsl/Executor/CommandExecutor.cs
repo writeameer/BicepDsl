@@ -1,45 +1,68 @@
-﻿using System.Diagnostics;
-using BicepDsl.Config;
-
-namespace BicepDsl.Executor;
+﻿using BicepDsl.Config;
+using System.Diagnostics;
 
 public static class CommandExecutor
 {
-    public static async Task<String?> ExecuteAsync(OrkaTool step)
+    private static readonly string logPath = "c:\\temp\\orka-exec.log";
+
+    private static void Log(string message)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+        File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss}] {message}\n");
+    }
+
+    public static async Task<string?> ExecuteAsync(OrkaTool step)
     {
         if (!step.Inputs.TryGetValue("command", out var raw))
         {
-            Console.WriteLine("No 'command' input found.");
-            return null;
+            Log("⚠️ No command provided.");
+            return "No command found.";
         }
 
         var command = raw.Trim('\'');
 
-        var psi = new ProcessStartInfo
+        Log($"🛠 Executing: {command}");
+
+        try
         {
-            FileName = Environment.OSVersion.Platform == PlatformID.Win32NT ? "cmd.exe" : "/bin/bash",
-            Arguments = Environment.OSVersion.Platform == PlatformID.Win32NT ? $"/C {command}" : $"-c \"{command}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
+            var psi = new ProcessStartInfo("cmd.exe", $"/c {command}")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        using var process = Process.Start(psi)!;
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
+            var process = Process.Start(psi);
+            if (process == null)
+            {
+                Log("❌ Failed to start process.");
+                return "Failed to start process.";
+            }
 
-        await process.WaitForExitAsync();
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
 
-        if (process.ExitCode != 0)
-        {
-            Console.WriteLine($"[ERROR]: {error}");
+            await process.WaitForExitAsync();
+
+            Log("✅ Process exited.");
+            Log($"📤 Output: {output}");
+            Log($"📛 Error: {error}");
+
+            File.AppendAllText("c:\\temp\\orka-tool-params.log", $"[{DateTime.Now:HH:mm:ss}] 🔍 Received command param: {command}\n");
+
+
+            return string.IsNullOrWhiteSpace(error) ? output : $"stderr: {error}";
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine(output);
+            Log($"🔥 Exception: {ex}");
+            return $"Exception: {ex.Message}";
         }
+    }
 
-        return output;
+    public static string? ExecuteSync(OrkaTool step)
+    {
+        return ExecuteAsync(step).GetAwaiter().GetResult();
     }
 }

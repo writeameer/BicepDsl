@@ -1,14 +1,10 @@
 ﻿using BicepDsl.Config;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BicepDsl.Executor;
 
-public static class WorkflowExecutor
+public class WorkflowExecutor
 {
+
     public static async Task ExecuteAsync(Workflow workflow)
     {
         foreach (var step in workflow.Steps)

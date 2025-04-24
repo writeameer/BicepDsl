@@ -2,7 +2,7 @@
   name: 'listResourceGroups'
   properties: {
     input: {
-      command: 'az group list --output json'
+      command: 'echo hello'
     }
   }
 }

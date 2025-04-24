@@ -26,7 +26,6 @@ public static class ConfigLoader
 
     public static Workflow ReadWorkflow(string fileName)
     {
-        Console.WriteLine($"The assembly directory is: {AssemblyDirectory}");
         var filePath = Path.Combine(AssemblyDirectory, fileName);
         if (!File.Exists(filePath))
         {

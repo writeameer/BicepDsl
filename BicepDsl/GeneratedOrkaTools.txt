@@ -1,0 +1,29 @@
+using ModelContextProtocol.Server;
+using System.ComponentModel;
+using System.Collections.Generic;
+using System.IO;
+using System;
+using BicepDsl.Executor;
+using BicepDsl.Config;
+
+namespace BicepDsl.Generated;
+
+public static class GeneratedOrkaTools
+{
+    [McpServerTool]
+    [Description("Orka tool generated for CLI command: echo hello")]
+    public static string listResourceGroups(string command)
+    {
+        File.AppendAllText("c:\\temp\\orka-tool-call.log", $"[{DateTime.Now:HH:mm:ss}] Tool 'listResourceGroups' called with command: {command}\n");
+        return CommandExecutor.ExecuteSync(new OrkaTool
+        {
+            Name = "listResourceGroups",
+            Provider = "orka.tool/az.group.list' ",
+            Inputs = new Dictionary<string, string>
+            {
+                { "command", command }
+            }
+        }) ?? "No output";
+    }
+
+}
